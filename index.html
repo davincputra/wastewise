@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WasteWise — Kelola Limbah UMKM Lebih Bijak</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --sage: #9DC183;
+  --sage-dark: #7aA660;
+  --sage-deep: #4e7040;
+  --sage-deeper: #3a5530;
+  --sage-light: #c4dab2;
+  --sage-pale: #e8f3e0;
+  --sage-ultra: #f4f9f0;
+  --sage-mid: #6b9e52;
+  --amber: #d4a843;
+  --amber-light: #fef3c7;
+  --cream: #fafaf7;
+  --white: #ffffff;
+  --dark: #1e2c1a;
+  --text: #2e3d28;
+  --text-light: #6b7c64;
+  --border: #d5e8c8;
+  --shadow-sm: 0 2px 12px rgba(78,112,64,0.08);
+  --shadow-md: 0 8px 32px rgba(78,112,64,0.13);
+  --shadow-lg: 0 20px 60px rgba(78,112,64,0.2);
+  --radius: 18px;
+  --radius-sm: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--sage-ultra); }
+::-webkit-scrollbar-thumb { background: var(--sage-light); border-radius: 3px; }
+
+/* ===== NAV ===== */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+.nav-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 68px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.35rem; font-weight: 800;
+  color: var(--sage-deeper); text-decoration: none;
+  cursor: pointer; letter-spacing: -0.3px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--sage), var(--sage-mid));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.nav-links {
+  display: flex; align-items: center; gap: 0.2rem;
+  list-style: none;
+}
+.nav-links a {
+  padding: 0.45rem 0.9rem;
+  color: var(--text-light); text-decoration: none;
+  font-size: 0.86rem; font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--sage-deeper); background: var(--sage-ultra); }
+.btn-nav {
+  background: var(--sage) !important; color: white !important;
+  border-radius: 100px !important; padding: 0.45rem 1.2rem !important;
+  font-weight: 600 !important;
+}
+.btn-nav:hover { background: var(--sage-dark) !important; color: white !important; }
+
+/* ===== PAGES ===== */
+.page { display: none; min-height: 100vh; padding-top: 68px; }
+.page.active { display: block; }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: calc(100vh - 68px);
+  display: flex; align-items: center;
+  overflow: hidden;
+  background: var(--sage-ultra);
+}
+.hero-bg { position: absolute; inset: 0; overflow: hidden; }
+.hero-blob {
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.35;
+  animation: float 8s ease-in-out infinite;
+}
+.hero-blob-1 { width: 600px; height: 600px; background: var(--sage-pale); top: -200px; right: -80px; }
+.hero-blob-2 { width: 400px; height: 400px; background: var(--sage-light); bottom: -100px; left: -80px; animation-delay: 3s; }
+.hero-blob-3 { width: 280px; height: 280px; background: #b8d8a4; top: 35%; left: 42%; animation-delay: 5s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.04); }
+}
+
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 1280px; margin: 0 auto;
+  padding: 5rem 2rem;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: white; border: 1px solid var(--border);
+  padding: 6px 16px; border-radius: 100px;
+  font-size: 0.78rem; font-weight: 600; color: var(--sage-mid);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.hero-badge::before { content: "🌿"; }
+.hero-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+  font-weight: 800; line-height: 1.15;
+  color: var(--sage-deeper); margin-bottom: 1.25rem;
+  letter-spacing: -0.5px;
+}
+.hero-title span { color: var(--sage-mid); }
+.hero-title .highlight {
+  background: linear-gradient(135deg, var(--sage), var(--sage-mid));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-desc {
+  font-size: 1rem; color: var(--text-light);
+  line-height: 1.85; margin-bottom: 2.25rem;
+  max-width: 500px; font-weight: 400;
+}
+.hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+.btn-primary {
+  background: var(--sage); color: white;
+  padding: 0.85rem 2rem; border-radius: 100px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; font-weight: 600;
+  border: none; cursor: pointer;
+  text-decoration: none; display: inline-block;
+  box-shadow: 0 4px 20px rgba(157,193,131,0.45);
+  transition: all 0.3s ease;
+}
+.btn-primary:hover { background: var(--sage-dark); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(157,193,131,0.55); }
+.btn-secondary {
+  background: white; color: var(--sage-mid);
+  padding: 0.85rem 2rem; border-radius: 100px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; font-weight: 600;
+  border: 2px solid var(--border); cursor: pointer;
+  text-decoration: none; display: inline-block;
+  transition: all 0.3s ease;
+}
+.btn-secondary:hover { border-color: var(--sage); background: var(--sage-ultra); }
+
+/* Register form mini */
+.hero-register {
+  background: white; border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1rem; border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); margin-top: 2rem;
+  max-width: 480px; box-sizing: border-box;
+}
+.hero-register h4 {
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--sage-deeper); margin-bottom: 0.65rem;
+}
+.register-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  width: 100%;
+}
+.register-input {
+  width: 100%; min-width: 0; padding: 0.62rem 0.75rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: 'Poppins', sans-serif; font-size: 0.82rem;
+  background: var(--sage-ultra); outline: none;
+  transition: border-color 0.2s; color: var(--text);
+}
+.register-input:focus { border-color: var(--sage); }
+.register-input::placeholder { color: var(--text-light); }
+.register-btn {
+  background: var(--sage); color: white;
+  padding: 0.62rem 1rem; border-radius: var(--radius-sm);
+  font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 600;
+  border: none; cursor: pointer; white-space: nowrap;
+  transition: background 0.2s; flex-shrink: 0;
+}
+.register-btn:hover { background: var(--sage-dark); }
+.register-note { font-size: 0.7rem; color: var(--text-light); margin-top: 0.5rem; }
+
+.hero-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.hero-stat {
+  background: white; border-radius: var(--radius-sm);
+  padding: 1rem; text-align: center;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.hero-stat-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.6rem; font-weight: 800; color: var(--sage-deeper);
+  line-height: 1;
+}
+.hero-stat-label { font-size: 0.7rem; color: var(--text-light); margin-top: 3px; font-weight: 500; }
+
+.hero-visual {
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.hero-card-stack { position: relative; width: 380px; height: 420px; }
+.hero-card {
+  position: absolute; background: white; border-radius: 20px;
+  padding: 1.5rem; box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+.hero-card-main { width: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3; }
+.hero-card-1 {
+  width: 220px; top: 10px; right: 0; z-index: 2;
+  transform: rotate(6deg);
+  background: linear-gradient(135deg, var(--sage-pale), white);
+}
+.hero-card-2 {
+  width: 200px; bottom: 10px; left: 0; z-index: 2;
+  transform: rotate(-5deg);
+  background: linear-gradient(135deg, var(--amber-light), white);
+}
+.card-icon-lg { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.card-title { font-weight: 700; color: var(--sage-deeper); margin-bottom: 0.25rem; font-size: 0.92rem; }
+.card-sub { font-size: 0.8rem; color: var(--text-light); }
+.progress-bar { background: var(--sage-pale); border-radius: 100px; height: 8px; margin-top: 0.75rem; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sage), var(--sage-light)); border-radius: 100px; }
+
+/* ===== SECTIONS ===== */
+.section { padding: 5rem 2rem; max-width: 1280px; margin: 0 auto; }
+.section-full { padding: 5rem 0; }
+
+.section-label {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--sage-mid);
+  margin-bottom: 0.5rem;
+}
+.section-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  font-weight: 800; color: var(--sage-deeper);
+  line-height: 1.25; margin-bottom: 1rem;
+  letter-spacing: -0.3px;
+}
+.section-desc { color: var(--text-light); max-width: 600px; font-size: 0.98rem; line-height: 1.8; font-weight: 400; }
+
+/* ===== FEATURES GRID ===== */
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem; margin-top: 2.5rem;
+}
+.feature-card {
+  background: white; border-radius: var(--radius);
+  padding: 1.75rem; border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: all 0.3s ease;
+  text-align: center;
+}
+.feature-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--sage-light); }
+.feature-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.7rem; margin: 0 auto 1rem;
+}
+.feature-title { font-weight: 700; font-size: 0.98rem; color: var(--sage-deeper); margin-bottom: 0.4rem; }
+.feature-desc { font-size: 0.83rem; color: var(--text-light); line-height: 1.65; }
+
+/* ===== TAGS ===== */
+.tag {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 0.72rem; font-weight: 600;
+}
+.tag-green { background: var(--sage-pale); color: var(--sage-deeper); }
+.tag-amber { background: var(--amber-light); color: #92400e; }
+.tag-blue { background: #dbeafe; color: #1e40af; }
+
+/* ===== STATS STRIP ===== */
+.stats-strip {
+  background: white; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 2.5rem 2rem;
+}
+.stats-strip-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;
+  text-align: center;
+}
+.stat-big {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.2rem; font-weight: 800; color: var(--sage-deeper);
+  line-height: 1;
+}
+.stat-big-label { font-size: 0.82rem; color: var(--text-light); margin-top: 4px; font-weight: 500; }
+.stat-big-sub { font-size: 0.7rem; color: var(--sage-mid); margin-top: 2px; font-weight: 600; }
+
+/* ===== ANNOUNCEMENT BANNER ===== */
+.announce-bar {
+  background: linear-gradient(135deg, var(--sage-pale), #dff0d0);
+  border: 1px solid var(--sage-light);
+  border-radius: var(--radius); padding: 1rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.announce-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--sage); flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(157,193,131,0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(157,193,131,0); }
+}
+.announce-text { font-size: 0.85rem; color: var(--sage-deeper); font-weight: 500; }
+.announce-text strong { font-weight: 700; }
+
+/* ===== EVENT CARDS ===== */
+.event-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.event-card {
+  background: white; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+}
+.event-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.event-header {
+  padding: 1.75rem 1.75rem 1rem;
+  background: linear-gradient(135deg, var(--sage-pale), var(--sage-ultra));
+}
+.event-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--sage); color: white;
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.event-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.event-title { font-size: 1.05rem; font-weight: 800; color: var(--sage-deeper); margin-bottom: 0.25rem; }
+.event-date { font-size: 0.78rem; color: var(--text-light); font-weight: 500; }
+.event-body { padding: 1.25rem 1.75rem 1.75rem; }
+.event-desc { font-size: 0.85rem; color: var(--text-light); line-height: 1.75; font-style: italic; margin-bottom: 1rem; }
+.event-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ===== CARDS GRID ===== */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.waste-card {
+  background: white; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+}
+.waste-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+.waste-card-img { width: 100%; height: 160px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: var(--sage-ultra); }
+.waste-card-body { padding: 1.25rem; }
+.waste-card-title { font-weight: 700; font-size: 0.96rem; color: var(--sage-deeper); margin-bottom: 0.25rem; }
+.waste-card-price { font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--sage-mid); }
+.waste-card-unit { font-size: 0.78rem; color: var(--text-light); }
+.waste-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+
+/* ===== BUTTONS ===== */
+.btn-sm {
+  padding: 0.48rem 1.1rem; border-radius: 100px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem; font-weight: 600; border: none; cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-green { background: var(--sage); color: white; }
+.btn-green:hover { background: var(--sage-dark); }
+.btn-outline { background: transparent; color: var(--sage-mid); border: 1.5px solid var(--sage); }
+.btn-outline:hover { background: var(--sage-ultra); }
+
+/* ===== PAGE HERO ===== */
+.section-hero {
+  background: linear-gradient(135deg, var(--sage-deeper) 0%, var(--sage-mid) 100%);
+  color: white; padding: 4rem 2rem; text-align: center;
+}
+.section-hero h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800;
+  margin-bottom: 0.6rem; letter-spacing: -0.3px;
+}
+.section-hero p { opacity: 0.82; font-size: 0.98rem; font-weight: 400; }
+
+/* ===== FILTERS ===== */
+.filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0; }
+.filter-btn {
+  padding: 0.38rem 1rem; border-radius: 100px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem; font-weight: 500; border: 1.5px solid var(--border);
+  background: white; color: var(--text-light); cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-btn.active, .filter-btn:hover { background: var(--sage); color: white; border-color: var(--sage); }
+
+.search-bar {
+  width: 100%; padding: 0.82rem 1.2rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: 'Poppins', sans-serif; font-size: 0.9rem;
+  background: white; outline: none;
+  transition: border-color 0.2s; color: var(--text);
+}
+.search-bar:focus { border-color: var(--sage); }
+
+/* ===== EDUKASI ===== */
+.edu-tips { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 1rem; margin-top: 2rem; }
+.tip-card {
+  background: white; border-radius: var(--radius); padding: 1.25rem 1rem;
+  text-align: center; border: 1px solid var(--border); cursor: pointer;
+  transition: all 0.3s; box-shadow: var(--shadow-sm);
+}
+.tip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.tip-icon { font-size: 1.9rem; margin-bottom: 0.6rem; }
+.tip-title { font-weight: 700; font-size: 0.82rem; color: var(--sage-deeper); margin-bottom: 0.2rem; }
+.tip-desc { font-size: 0.75rem; color: var(--text-light); line-height: 1.5; }
+
+.edu-accordion { margin-top: 1rem; }
+.acc-item { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.5rem; overflow: hidden; }
+.acc-header {
+  padding: 0.9rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; background: white; transition: background 0.2s;
+  font-weight: 600; font-size: 0.9rem; color: var(--sage-deeper);
+}
+.acc-header:hover { background: var(--sage-ultra); }
+.acc-body { padding: 1rem 1.25rem; background: var(--sage-ultra); font-size: 0.87rem; color: var(--text-light); line-height: 1.75; display: none; }
+.acc-body.open { display: block; }
+
+.edu-articles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.article-card {
+  background: white; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: all 0.3s;
+}
+.article-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.article-img { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+.article-body { padding: 1.1rem; }
+.article-title { font-weight: 700; color: var(--sage-deeper); margin-bottom: 0.4rem; font-size: 0.9rem; line-height: 1.45; }
+.article-desc { font-size: 0.8rem; color: var(--text-light); line-height: 1.6; }
+
+/* ===== MARKETPLACE ===== */
+.marketplace-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.product-card {
+  background: white; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+}
+.product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.product-img { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: var(--sage-ultra); }
+.product-body { padding: 1.25rem; }
+.product-name { font-weight: 700; font-size: 0.9rem; color: var(--sage-deeper); margin-bottom: 0.25rem; }
+.product-desc { font-size: 0.78rem; color: var(--text-light); margin-bottom: 0.75rem; line-height: 1.55; }
+.product-price { font-size: 1.2rem; font-weight: 800; color: var(--sage-mid); margin-bottom: 0.25rem; }
+.product-unit { font-size: 0.72rem; color: var(--text-light); margin-bottom: 0.75rem; }
+.product-footer { display: flex; gap: 0.5rem; }
+
+/* ===== JUAL LIMBAH PRICE CARDS ===== */
+.waste-price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+.price-card {
+  background: white; border-radius: var(--radius); padding: 1.5rem;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  text-align: center; transition: all 0.3s;
+}
+.price-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--sage-light); }
+.price-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
+.price-name { font-weight: 700; font-size: 0.88rem; color: var(--sage-deeper); margin-bottom: 0.2rem; }
+.price-sub { font-size: 0.72rem; color: var(--text-light); margin-bottom: 0.75rem; }
+.price-value { font-size: 1.5rem; font-weight: 800; color: var(--sage-mid); line-height: 1; }
+.price-per { font-size: 0.72rem; color: var(--text-light); margin-bottom: 0.6rem; }
+.price-trend { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 100px; display: inline-block; }
+.trend-up { background: #dcfce7; color: #166534; }
+.trend-down { background: #fee2e2; color: #991b1b; }
+.trend-stable { background: var(--sage-pale); color: var(--sage-deeper); }
+
+/* ===== DROP POINT ===== */
+#map { width: 100%; height: 480px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+.dp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+.dp-card {
+  background: white; border-radius: var(--radius); padding: 1.5rem;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: all 0.3s;
+}
+.dp-card:hover { box-shadow: var(--shadow-md); border-color: var(--sage-light); }
+.dp-name { font-weight: 700; font-size: 0.92rem; color: var(--sage-deeper); margin-bottom: 0.4rem; }
+.dp-info { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.25rem; }
+.dp-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.75rem 0; }
+.dp-footer { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* ===== LEADERBOARD ===== */
+.lb-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+.lb-row {
+  display: grid; grid-template-columns: 56px 1fr 120px 120px;
+  align-items: center; gap: 1rem;
+  padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: white; margin-bottom: 0.5rem;
+  box-shadow: var(--shadow-sm); transition: all 0.2s;
+}
+.lb-row:hover { box-shadow: var(--shadow-md); }
+.lb-row.top1 { background: linear-gradient(135deg, #fffbeb, #fff); border-color: #fcd34d; }
+.lb-row.top2 { background: linear-gradient(135deg, #f8fafc, #fff); border-color: #cbd5e1; }
+.lb-row.top3 { background: linear-gradient(135deg, #fff8f3, #fff); border-color: #fed7aa; }
+.lb-rank { font-weight: 800; font-size: 1.05rem; text-align: center; color: var(--sage-deeper); }
+.lb-name { font-weight: 600; font-size: 0.9rem; color: var(--sage-deeper); }
+.lb-city { font-size: 0.78rem; color: var(--text-light); }
+.lb-pts { font-weight: 800; font-size: 1rem; color: var(--sage-mid); text-align: right; }
+.lb-badge { text-align: right; }
+
+/* ===== BERITA ===== */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.news-card {
+  background: white; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: all 0.3s;
+  cursor: pointer;
+}
+.news-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.news-img { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+.news-body { padding: 1.25rem; }
+.news-meta { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.6rem; }
+.news-date { font-size: 0.72rem; color: var(--text-light); }
+.news-title { font-weight: 700; font-size: 0.9rem; color: var(--sage-deeper); margin-bottom: 0.4rem; line-height: 1.45; }
+.news-desc { font-size: 0.8rem; color: var(--text-light); line-height: 1.6; }
+
+/* ===== FOOTER ===== */
+footer {
+  background: var(--sage-deeper); color: white;
+  padding: 4rem 2rem 2rem;
+}
+.footer-grid {
+  max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+  margin-bottom: 3rem;
+}
+.footer-brand .logo { color: white; margin-bottom: 0.75rem; }
+.footer-desc { font-size: 0.83rem; color: rgba(255,255,255,0.62); line-height: 1.75; }
+.footer-col h4 { font-weight: 700; font-size: 0.85rem; margin-bottom: 1rem; color: var(--sage-light); letter-spacing: 0.5px; }
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 0.5rem; }
+.footer-col ul li a { color: rgba(255,255,255,0.62); font-size: 0.82rem; text-decoration: none; cursor: pointer; transition: color 0.2s; }
+.footer-col ul li a:hover { color: var(--sage-light); }
+.footer-bottom {
+  max-width: 1280px; margin: 0 auto;
+  border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.78rem; color: rgba(255,255,255,0.45);
+}
+
+/* ===== STEPS ===== */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 2rem; margin-top: 2.5rem; text-align: center; }
+.step-num {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--sage), var(--sage-light));
+  color: white; font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem; font-weight: 800; margin: 0 auto 1rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-title { font-weight: 700; color: var(--sage-deeper); margin-bottom: 0.4rem; font-size: 0.9rem; }
+.step-desc { font-size: 0.82rem; color: var(--text-light); line-height: 1.65; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(30,44,26,0.55); backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white; border-radius: var(--radius);
+  padding: 2rem; width: 90%; max-width: 420px;
+  position: relative; box-shadow: var(--shadow-lg);
+}
+.modal h3 { font-weight: 800; color: var(--sage-deeper); font-size: 1.15rem; margin-bottom: 1.25rem; }
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: var(--sage-ultra); border: none; border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer; font-size: 0.9rem;
+  color: var(--text-light); display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.modal-close:hover { background: var(--sage-pale); }
+.input-group { margin-bottom: 0.85rem; }
+.input-group label { font-size: 0.8rem; font-weight: 600; color: var(--sage-deeper); display: block; margin-bottom: 0.3rem; }
+.input-group input {
+  width: 100%; padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: 'Poppins', sans-serif; font-size: 0.88rem; outline: none;
+  transition: border-color 0.2s; color: var(--text);
+}
+.input-group input:focus { border-color: var(--sage); }
+
+/* ===== HELPDESK ===== */
+.hd-wrap { position: fixed; bottom: 2rem; right: 2rem; z-index: 1500; }
+.hd-btn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--sage); color: white; border: none; cursor: pointer;
+  font-size: 1.4rem; box-shadow: 0 4px 20px rgba(157,193,131,0.5);
+  transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+}
+.hd-btn:hover { background: var(--sage-dark); transform: scale(1.08); }
+.hd-chat {
+  display: none; position: absolute; bottom: 70px; right: 0;
+  width: 320px; background: white; border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); border: 1px solid var(--border); overflow: hidden;
+}
+.hd-chat.open { display: flex; flex-direction: column; }
+.hd-header {
+  background: var(--sage-deeper); color: white;
+  padding: 0.9rem 1.25rem; display: flex; align-items: center; justify-content: space-between;
+}
+.hd-header-title { font-weight: 700; font-size: 0.9rem; }
+.hd-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.1rem; }
+.hd-messages { padding: 1rem; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+.hd-msg { display: flex; gap: 0.5rem; align-items: flex-start; }
+.hd-msg.user { flex-direction: row-reverse; }
+.hd-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+.hd-avatar-bot { background: var(--sage-pale); }
+.hd-avatar-user { background: var(--sage-light); }
+.hd-bubble { padding: 0.6rem 0.9rem; border-radius: 12px; font-size: 0.82rem; line-height: 1.55; max-width: 220px; }
+.hd-msg:not(.user) .hd-bubble { background: var(--sage-ultra); color: var(--text); }
+.hd-msg.user .hd-bubble { background: var(--sage); color: white; }
+.hd-quick { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0 1rem 0.5rem; }
+.hd-q {
+  font-size: 0.72rem; padding: 4px 10px; border-radius: 100px;
+  background: var(--sage-pale); color: var(--sage-deeper); cursor: pointer;
+  border: 1px solid var(--sage-light); font-weight: 600; transition: all 0.2s;
+}
+.hd-q:hover { background: var(--sage-light); }
+.hd-input-area { padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+.hd-input {
+  flex: 1; padding: 0.55rem 0.85rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: 'Poppins', sans-serif; font-size: 0.82rem; outline: none;
+  transition: border-color 0.2s; color: var(--text);
+}
+.hd-input:focus { border-color: var(--sage); }
+.hd-send {
+  background: var(--sage); color: white; border: none; border-radius: var(--radius-sm);
+  width: 36px; height: 36px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.hd-send:hover { background: var(--sage-dark); }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--sage-deeper); color: white; padding: 0.75rem 1.5rem;
+  border-radius: 100px; font-size: 0.85rem; font-weight: 500;
+  opacity: 0; transition: all 0.3s; z-index: 3000; white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== POINT BADGE ===== */
+.point-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--amber-light); color: #92400e;
+  padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeInUp 0.6s ease forwards; }
+.fade-in-2 { animation: fadeInUp 0.6s 0.15s ease forwards; opacity: 0; }
+.fade-in-3 { animation: fadeInUp 0.6s 0.3s ease forwards; opacity: 0; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero-visual { display: none; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .stats-strip-inner { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .lb-row { grid-template-columns: 40px 1fr auto; }
+  .stats-strip-inner { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="logo" onclick="showPage('beranda')">
+      <div class="logo-icon">♻️</div>
+      WasteWise
+    </a>
+    <ul class="nav-links">
+      <li><a onclick="showPage('beranda')" data-page="beranda" class="active">Beranda</a></li>
+      <li><a onclick="showPage('edukasi')" data-page="edukasi">Edukasi</a></li>
+      <li><a onclick="showPage('jual')" data-page="jual">Jual Sampah</a></li>
+      <li><a onclick="showPage('marketplace')" data-page="marketplace">Marketplace</a></li>
+      <li><a onclick="showPage('droppoint')" data-page="droppoint">Drop Point</a></li>
+      <li><a onclick="showPage('leaderboard')" data-page="leaderboard">🏆 Reward</a></li>
+      <li><a class="btn-nav" onclick="openModal('loginModal')">Masuk / Daftar</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ===== PAGE: BERANDA ===== -->
+<div class="page active" id="page-beranda">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-blob hero-blob-1"></div>
+      <div class="hero-blob hero-blob-2"></div>
+      <div class="hero-blob hero-blob-3"></div>
+    </div>
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge fade-in">Platform Limbah UMKM #1 di Indonesia</div>
+        <h1 class="hero-title fade-in-2">
+          Halo <span class="highlight">Wisers!</span><br>
+          Ubah limbah jadi<br>dampak nyata
+        </h1>
+        <p class="hero-desc fade-in-3">
+          Bergabunglah dengan ribuan UMKM cerdas yang telah mengubah sisa operasional menjadi sumber pendapatan baru. Bersama WasteWise, kita kelola sampah dengan cara yang lebih bijak.
+        </p>
+        <div class="hero-cta fade-in-3">
+          <button class="btn-primary" onclick="openModal('loginModal')">Daftar UMKM Gratis</button>
+          <button class="btn-secondary" onclick="showPage('edukasi')">Pelajari Caranya →</button>
+        </div>
+
+        <!-- Mini register form -->
+        <div class="hero-register fade-in-3">
+          <h4>🌿 Daftar sekarang, gratis!</h4>
+          <div class="register-row">
+            <input class="register-input" type="text" placeholder="Nama usaha Anda">
+            <input class="register-input" type="email" placeholder="Email">
+            <button class="register-btn" onclick="openModal('loginModal')">Daftar</button>
+          </div>
+          <p class="register-note">Sudah <strong>12.000+</strong> Wisers bergabung · Gratis selamanya untuk UMKM</p>
+        </div>
+
+        <div class="hero-stats fade-in-3">
+          <div class="hero-stat">
+            <div class="hero-stat-num">12K+</div>
+            <div class="hero-stat-label">Wisers Terdaftar</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">840T</div>
+            <div class="hero-stat-label">Sampah Dikelola</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">98</div>
+            <div class="hero-stat-label">Kota Terjangkau</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual cards -->
+      <div class="hero-visual">
+        <div class="hero-card-stack">
+          <div class="hero-card hero-card-1">
+            <div class="card-icon-lg">🏆</div>
+            <div class="card-title">Poin Reward Wisers</div>
+            <div class="card-sub">Bakso Mas Budi — Bandung</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>
+            <div style="font-size:0.72rem;color:var(--text-light);margin-top:4px">1.400 / 2.000 poin</div>
+          </div>
+          <div class="hero-card hero-card-2">
+            <div style="font-size:1.5rem">📦</div>
+            <div class="card-title" style="font-size:0.85rem">Setoran Terakhir</div>
+            <div class="card-sub">Kardus 25kg — Rp 50.000</div>
+          </div>
+          <div class="hero-card hero-card-main">
+            <div class="card-icon-lg">♻️</div>
+            <div class="card-title">Total Setoran Bulan Ini</div>
+            <div style="font-family:'Poppins',sans-serif;font-size:1.9rem;font-weight:800;color:var(--sage-mid);margin:0.5rem 0;line-height:1">Rp 1.240.000</div>
+            <div class="card-sub">Dari 8× setor limbah</div>
+            <div class="progress-bar" style="margin-top:1rem"><div class="progress-fill" style="width:85%"></div></div>
+            <div style="font-size:0.72rem;color:var(--text-light);margin-top:4px">85% target terpenuhi ✨</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS STRIP: Informasi pendukung -->
+  <div class="stats-strip">
+    <div class="stats-strip-inner">
+      <div>
+        <div class="stat-big">12.847</div>
+        <div class="stat-big-label">Wisers Aktif Terdaftar</div>
+        <div class="stat-big-sub">↑ +320 bulan ini</div>
+      </div>
+      <div>
+        <div class="stat-big">4,2T</div>
+        <div class="stat-big-label">Sampah Harian Indonesia</div>
+        <div class="stat-big-sub">ton/hari (KLHK 2024)</div>
+      </div>
+      <div>
+        <div class="stat-big">840T</div>
+        <div class="stat-big-label">Sampah Dikelola WasteWise</div>
+        <div class="stat-big-sub">ton sejak berdiri</div>
+      </div>
+      <div>
+        <div class="stat-big">69%</div>
+        <div class="stat-big-label">Potensi Sampah Tak Terkelola</div>
+        <div class="stat-big-sub">masih bisa kita atasi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENGUMUMAN EVENT -->
+  <section class="section">
+    <div class="announce-bar">
+      <div class="announce-dot"></div>
+      <div class="announce-text">📣 <strong>Wisers Grand Award & Expo 2025</strong> — Pendaftaran dibuka hingga 30 Juni 2025. Daftarkan usaha Anda sekarang!</div>
+    </div>
+
+    <div class="section-label">Event & Rewards</div>
+    <h2 class="section-title">Program Eksklusif untuk Wisers</h2>
+    <p class="section-desc">Kami menghargai setiap langkah kecil Anda. Ikuti event kami dan raih apresiasi yang layak.</p>
+
+    <div class="event-grid">
+      <div class="event-card">
+        <div class="event-header">
+          <div class="event-badge">🎁 Bulanan</div>
+          <div class="event-icon">🌟</div>
+          <div class="event-title">Wisers Monthly Surprise</div>
+          <div class="event-date">📅 Setiap akhir bulan · Berlangsung Rutin</div>
+        </div>
+        <div class="event-body">
+          <p class="event-desc">"Setiap bulan, kami memilih 5 Wisers terbaik untuk menerima apresiasi eksklusif sebagai bentuk terima kasih atas kontribusi Anda menjaga ekosistem."</p>
+          <div class="event-meta">
+            <span class="tag tag-green">5 Pemenang/Bulan</span>
+            <span class="tag tag-amber">Hadiah Eksklusif</span>
+          </div>
+          <button class="btn-sm btn-green" style="margin-top:1rem" onclick="showToast('✅ Anda sudah terdaftar dalam program ini!')">Ikut Sekarang</button>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-header">
+          <div class="event-badge">🏆 Tahunan</div>
+          <div class="event-icon">🎊</div>
+          <div class="event-title">Wisers Grand Award & Expo</div>
+          <div class="event-date">📅 Agustus 2025 · Jakarta Convention Center</div>
+        </div>
+        <div class="event-body">
+          <p class="event-desc">"Ini bukan sekadar pertemuan biasa. Ini adalah panggung perayaan bagi para Wisers, yang telah membuktikan bahwa bisnis UMKM bisa sukses sekaligus mencintai bumi."</p>
+          <div class="event-meta">
+            <span class="tag tag-green">Grand Exhibition</span>
+            <span class="tag tag-blue">Networking</span>
+            <span class="tag tag-amber">Award Night</span>
+          </div>
+          <button class="btn-sm btn-green" style="margin-top:1rem" onclick="showToast('🎉 Pendaftaran Grand Award berhasil!')">Daftar Expo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FITUR UTAMA -->
+  <section style="background: var(--sage-ultra); padding: 5rem 0;">
+    <div class="section" style="padding-top:0;padding-bottom:0">
+      <div class="section-label">Layanan Kami</div>
+      <h2 class="section-title">Satu Platform,<br>Semua Solusi Limbah UMKM</h2>
+      <p class="section-desc">Dari edukasi hingga monetisasi, WasteWise hadir untuk Wisers yang ingin mengelola limbah secara bijak dan menguntungkan.</p>
+      <div class="features-grid">
+        <div class="feature-card" onclick="showPage('edukasi')">
+          <div class="feature-icon" style="background:var(--sage-pale)">📚</div>
+          <div class="feature-title">Pusat Edukasi</div>
+          <div class="feature-desc">Panduan pemilahan jenis sampah, cara membersihkan limbah, dan tips kelola usaha ramah lingkungan.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('jual')">
+          <div class="feature-icon" style="background:#fce7f3">💰</div>
+          <div class="feature-title">Jual Sampah</div>
+          <div class="feature-desc">Jual minyak jelantah, kardus, plastik, dan organik sesuai harga pasar yang transparan dan terkini.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('marketplace')">
+          <div class="feature-icon" style="background:var(--amber-light)">🛒</div>
+          <div class="feature-title">Marketplace Hijau</div>
+          <div class="feature-desc">Belanja produk ramah lingkungan untuk kebutuhan operasional UMKM Anda sehari-hari.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('droppoint')">
+          <div class="feature-icon" style="background:#dbeafe">📍</div>
+          <div class="feature-title">Drop Point</div>
+          <div class="feature-desc">Temukan lokasi setor sampah terdekat. Gratis, mudah, dan setiap setoran tercatat secara digital.</div>
+        </div>
+        <div class="feature-card" onclick="showPage('leaderboard')">
+          <div class="feature-icon" style="background:#ede9fe">🏆</div>
+          <div class="feature-title">Reward & Leaderboard</div>
+          <div class="feature-desc">Kumpulkan poin tiap setoran, ikuti event, dan dapatkan sertifikat hijau untuk usaha Anda.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section style="background: var(--sage-deeper); padding: 5rem 2rem;">
+    <div style="max-width:1280px;margin:0 auto;text-align:center;">
+      <div class="section-label" style="color:var(--sage-light)">Cara Kerja</div>
+      <h2 class="section-title" style="color:white">Mulai dalam 3 Langkah</h2>
+      <div class="steps" style="margin-top:3rem">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title" style="color:white">Daftar sebagai Wisers</div>
+          <div class="step-desc" style="color:rgba(255,255,255,0.62)">Registrasi gratis dengan data usaha Anda. Proses hanya 2 menit.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title" style="color:white">Catat & Setor Sampah</div>
+          <div class="step-desc" style="color:rgba(255,255,255,0.62)">Pilih jenis sampah, setor ke drop point terdekat atau request pickup.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title" style="color:white">Raih Poin & Reward</div>
+          <div class="step-desc" style="color:rgba(255,255,255,0.62)">Kumpulkan poin, ikuti event, dan dapatkan sertifikat keberlanjutan.</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:3rem;font-size:0.95rem;padding:0.95rem 2.5rem" onclick="openModal('loginModal')">Mulai Sekarang — Gratis</button>
+    </div>
+  </section>
+
+  <!-- TESTIMONI -->
+  <section class="section">
+    <div class="section-label">Cerita Wisers</div>
+    <h2 class="section-title">Ribuan UMKM Sudah Merasakannya</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-top:2.5rem">
+      <div style="background:white;border-radius:var(--radius);padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+        <div style="font-size:1.2rem;color:var(--amber);margin-bottom:0.6rem">★★★★★</div>
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.75;margin-bottom:1rem">"Dulu minyak jelantah dan sisa bahan baku kami buang begitu saja. Sekarang bisa dijual dan hasilkan penghasilan tambahan Rp 800rb per bulan!"</p>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--sage-pale);display:flex;align-items:center;justify-content:center;font-size:1.1rem">👩</div>
+          <div>
+            <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper)">Ibu Sari Dewi</div>
+            <div style="font-size:0.72rem;color:var(--text-light)">Warung Masakan Rumahan, Bandung</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+        <div style="font-size:1.2rem;color:var(--amber);margin-bottom:0.6rem">★★★★★</div>
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.75;margin-bottom:1rem">"Sertifikat WasteWise jadi nilai jual lebih untuk toko kami. Pelanggan lebih percaya bahwa kami peduli lingkungan."</p>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:1.1rem">👨</div>
+          <div>
+            <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper)">Pak Budi Santoso</div>
+            <div style="font-size:0.72rem;color:var(--text-light)">Toko Bakery & Kue, Surabaya</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+        <div style="font-size:1.2rem;color:var(--amber);margin-bottom:0.6rem">★★★★★</div>
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.75;margin-bottom:1rem">"WasteWise bikin saya sadar betapa banyak sampah yang terbuang dari produksi. Sekarang semua sisa sudah ada jalurnya."</p>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="width:38px;height:38px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1.1rem">👩</div>
+          <div>
+            <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper)">Ibu Ratna Wulandari</div>
+            <div style="font-size:0.72rem;color:var(--text-light)">Usaha Batik, Solo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== PAGE: EDUKASI ===== -->
+<div class="page" id="page-edukasi">
+  <div class="section-hero">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">📚</div>
+    <h1>Pusat Edukasi Wisers</h1>
+    <p>Pelajari cara memilah dan mengelola sampah usaha Anda untuk masa depan yang lebih hijau</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Tips Pemilahan</div>
+    <h2 class="section-title">Cara Memilah Jenis Sampah & Membersihkannya untuk Dijual</h2>
+    <p class="section-desc">Sampah yang dipilah dan dibersihkan dengan benar menghasilkan harga jual yang lebih tinggi. Klik kartu untuk panduan detail.</p>
+
+    <div class="edu-tips">
+      <div class="tip-card" onclick="toggleTip(this,'MINYAK JELANTAH: Simpan dalam wadah tertutup (jerigen/botol), jangan campur dengan air. Saring kotoran menggunakan kain bersih. Kondisi bersih = harga Rp 5.000/liter. Minyak keruh atau bercampur air akan dipotong harganya.')">
+        <div class="tip-icon">🫙</div>
+        <div class="tip-title">Minyak Jelantah</div>
+        <div class="tip-desc">Cara simpan & bersihkan sebelum dijual</div>
+      </div>
+      <div class="tip-card" onclick="toggleTip(this,'KARDUS: Ratakan kardus agar lebih ringkas dan mudah ditimbang. Lepaskan lakban/selotip yang menempel. Keringkan jika basah — kardus basah bisa ditolak pembeli. Satukan dengan tali. Harga terbaik untuk kardus bersih dan kering: Rp 2.000/kg.')">
+        <div class="tip-icon">📦</div>
+        <div class="tip-title">Kardus</div>
+        <div class="tip-desc">Ratakan, keringkan, ikat rapi</div>
+      </div>
+      <div class="tip-card" onclick="toggleTip(this,'KANTONG KRESEK: Kumpulkan dalam satu kantong besar. Bersihkan dari sisa makanan atau minyak — cuci dan keringkan. Jangan campur dengan plastik jenis lain (PET, HDPE). Harga: Rp 200/kg untuk kresek bersih kering.')">
+        <div class="tip-icon">🛍️</div>
+        <div class="tip-title">Kantong Kresek</div>
+        <div class="tip-desc">Bersihkan dari sisa minyak/makanan</div>
+      </div>
+      <div class="tip-card" onclick="toggleTip(this,'SAMPAH ORGANIK: Pisahkan dari sampah anorganik. Hindari mencampur dengan plastik atau logam. Untuk potongan sayur/kulit buah, tidak perlu dicuci — cukup tiriskan agar tidak terlalu basah. Harga: Rp 1.000/kg untuk organik segar.')">
+        <div class="tip-icon">🥬</div>
+        <div class="tip-title">Sampah Organik</div>
+        <div class="tip-desc">Tiriskan, pisahkan dari anorganik</div>
+      </div>
+      <div class="tip-card" onclick="toggleTip(this,'BOTOL & GELAS PLASTIK (PET): Bilas bersih dari sisa minuman. Lepaskan tutup botol (dijual terpisah). Gepengkan/injak agar lebih ringkas dan mudah ditimbang. Harga: Rp 3.000–5.000/kg tergantung kebersihan dan kondisi.')">
+        <div class="tip-icon">🧴</div>
+        <div class="tip-title">Botol/Gelas Plastik</div>
+        <div class="tip-desc">Bilas, gepengkan, lepas tutupnya</div>
+      </div>
+      <div class="tip-card" onclick="toggleTip(this,'PRINSIP 3R untuk UMKM: Reduce (kurangi pembelian bahan berlebih), Reuse (pakai ulang kemasan yang masih layak), Recycle (jual sisa ke WasteWise). Dengan 3R, limbah bisa berkurang hingga 60% dan biaya operasional lebih efisien.')">
+        <div class="tip-icon">♻️</div>
+        <div class="tip-title">Prinsip 3R UMKM</div>
+        <div class="tip-desc">Reduce, Reuse, Recycle</div>
+      </div>
+    </div>
+
+    <div id="tip-detail" style="display:none;background:var(--sage-ultra);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-top:1rem;border-left:4px solid var(--sage)">
+      <p id="tip-text" style="color:var(--text);font-size:0.88rem;line-height:1.8;font-weight:500"></p>
+    </div>
+  </div>
+
+  <!-- JENIS LIMBAH ACCORDION -->
+  <div style="background:var(--sage-ultra);padding:4rem 0">
+    <div class="section" style="padding-top:0;padding-bottom:0">
+      <div class="section-label">Panduan Lengkap</div>
+      <h2 class="section-title">Mengenal Jenis Limbah UMKM</h2>
+      <div class="edu-accordion" style="margin-top:1.5rem">
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">🫙 Minyak Jelantah <span>▼</span></div>
+          <div class="acc-body">Minyak goreng bekas dari usaha kuliner adalah salah satu limbah paling bernilai. Minyak bersih dalam wadah tertutup bisa dijual Rp 5.000/liter. Minyak ini diolah menjadi biodiesel dan sabun industri. Jangan buang ke saluran air — sangat mencemari lingkungan.</div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">📦 Kardus & Kertas <span>▼</span></div>
+          <div class="acc-body">Kardus dari bahan baku atau pengiriman bisa langsung dijual Rp 2.000/kg dalam kondisi kering dan bersih. Ratakan untuk menghemat ruang penyimpanan. Kertas HVS, koran, dan majalah dijual terpisah dengan harga lebih rendah sekitar Rp 500–1.000/kg.</div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">🛍️ Plastik (Kresek, Botol, Gelas) <span>▼</span></div>
+          <div class="acc-body">Pisahkan berdasarkan jenis: kresek/LDPE (Rp 200/kg), botol/gelas PET (Rp 3.000–5.000/kg), botol deterjen HDPE (Rp 2.800/kg). Cuci bersih dan keringkan sebelum dijual untuk mendapatkan harga terbaik.</div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">🥬 Sampah Organik <span>▼</span></div>
+          <div class="acc-body">Sisa sayuran, potongan buah, ampas, dan bahan baku terbuang dari usaha kuliner. Dijual Rp 1.000/kg dan diolah menjadi pupuk kompos atau pakan ternak. Kumpulkan setiap hari agar tidak membusuk dan mengurangi kualitas.</div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">🔌 Limbah Elektronik (E-Waste) <span>▼</span></div>
+          <div class="acc-body">HP rusak, kabel, baterai, dan perangkat elektronik mengandung logam berat berbahaya. Jangan buang sembarangan — setor ke drop point e-waste khusus. Logam di dalamnya (tembaga, aluminium) memiliki nilai daur ulang tinggi.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARTIKEL -->
+  <div class="section">
+    <div class="section-label">Baca & Pelajari</div>
+    <h2 class="section-title">Artikel Edukasi Terkini</h2>
+    <div class="edu-articles">
+      <div class="article-card" onclick="showToast('📖 Membuka artikel...')">
+        <div class="article-img" style="background:#f0fdf4">🌿</div>
+        <div class="article-body">
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem"><span class="tag tag-green">Pemilahan</span><span style="font-size:0.72rem;color:var(--text-light)">5 menit baca</span></div>
+          <div class="article-title">Panduan Lengkap: 5 Jenis Plastik dan Cara Membedakannya</div>
+          <div class="article-desc">Tidak semua plastik sama. Pelajari simbol daur ulang dan cara memilah plastik agar bisa dijual dengan harga terbaik.</div>
+        </div>
+      </div>
+      <div class="article-card" onclick="showToast('📖 Membuka artikel...')">
+        <div class="article-img" style="background:#fffbeb">🍳</div>
+        <div class="article-body">
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem"><span class="tag tag-amber">Kuliner</span><span style="font-size:0.72rem;color:var(--text-light)">4 menit baca</span></div>
+          <div class="article-title">Minyak Jelantah: Dari Limbah Dapur Jadi Sumber Cuan</div>
+          <div class="article-desc">UMKM kuliner bisa hasilkan jutaan rupiah dari minyak jelantah yang biasanya dibuang. Simak caranya di sini.</div>
+        </div>
+      </div>
+      <div class="article-card" onclick="showToast('📖 Membuka artikel...')">
+        <div class="article-img" style="background:#f0f9ff">💧</div>
+        <div class="article-body">
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem"><span class="tag tag-blue">Regulasi</span><span style="font-size:0.72rem;color:var(--text-light)">6 menit baca</span></div>
+          <div class="article-title">Aturan Baru Pengelolaan Limbah UMKM 2025: Apa yang Perlu Diketahui?</div>
+          <div class="article-desc">Pemerintah memperketat regulasi limbah usaha. Pastikan UMKM Anda sudah comply sebelum kena sanksi.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: JUAL SAMPAH ===== -->
+<div class="page" id="page-jual">
+  <div class="section-hero">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">💰</div>
+    <h1>Jual Sampah UMKM</h1>
+    <p>Harga pasar terkini yang transparan — maksimalkan nilai setiap kilogram limbah Anda</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Harga Pasar Hari Ini</div>
+    <h2 class="section-title">Daftar Harga Sampah</h2>
+    <p class="section-desc" style="margin-bottom:0.5rem">Harga per satuan sesuai standar kualitas WasteWise. Diperbarui setiap hari kerja.</p>
+    <div style="font-size:0.78rem;color:var(--text-light);margin-bottom:1.5rem">🕐 Terakhir diperbarui: Hari ini, 09.00 WIB</div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter(this,'semua')">Semua</button>
+      <button class="filter-btn" onclick="setFilter(this,'organik')">Organik</button>
+      <button class="filter-btn" onclick="setFilter(this,'plastik')">Plastik</button>
+      <button class="filter-btn" onclick="setFilter(this,'kertas')">Kertas/Kardus</button>
+      <button class="filter-btn" onclick="setFilter(this,'minyak')">Minyak</button>
+    </div>
+
+    <div class="waste-price-grid">
+      <div class="price-card">
+        <div class="price-icon">🫙</div>
+        <div class="price-name">Minyak Jelantah</div>
+        <div class="price-sub">Bersih, dalam wadah tertutup</div>
+        <div class="price-value">Rp 5.000</div>
+        <div class="price-per">/liter</div>
+        <div class="price-trend trend-up">↑ Stabil</div>
+        <button class="btn-sm btn-green" style="margin-top:0.75rem;width:100%" onclick="showToast('✅ Permintaan jual minyak jelantah dikirim!')">Jual Sekarang</button>
+      </div>
+      <div class="price-card">
+        <div class="price-icon">📦</div>
+        <div class="price-name">Kardus</div>
+        <div class="price-sub">Kering, diratakan, bersih</div>
+        <div class="price-value">Rp 2.000</div>
+        <div class="price-per">/kg</div>
+        <div class="price-trend trend-up">↑ +100</div>
+        <button class="btn-sm btn-green" style="margin-top:0.75rem;width:100%" onclick="showToast('✅ Permintaan jual kardus dikirim!')">Jual Sekarang</button>
+      </div>
+      <div class="price-card">
+        <div class="price-icon">🛍️</div>
+        <div class="price-name">Kantong Kresek</div>
+        <div class="price-sub">Bersih, kering, dikumpulkan</div>
+        <div class="price-value">Rp 200</div>
+        <div class="price-per">/kg</div>
+        <div class="price-trend trend-stable">→ Stabil</div>
+        <button class="btn-sm btn-green" style="margin-top:0.75rem;width:100%" onclick="showToast('✅ Permintaan jual kresek dikirim!')">Jual Sekarang</button>
+      </div>
+      <div class="price-card">
+        <div class="price-icon">🥬</div>
+        <div class="price-name">Sampah Organik</div>
+        <div class="price-sub">Potongan sayur/kulit buah/dll</div>
+        <div class="price-value">Rp 1.000</div>
+        <div class="price-per">/kg</div>
+        <div class="price-trend trend-up">↑ Stabil</div>
+        <button class="btn-sm btn-green" style="margin-top:0.75rem;width:100%" onclick="showToast('✅ Permintaan jual organik dikirim!')">Jual Sekarang</button>
+      </div>
+      <div class="price-card">
+        <div class="price-icon">🧴</div>
+        <div class="price-name">Botol/Gelas Plastik</div>
+        <div class="price-sub">PET bersih, dipress</div>
+        <div class="price-value">Rp 3.000–5.000</div>
+        <div class="price-per">/kg</div>
+        <div class="price-trend trend-up">↑ +300</div>
+        <button class="btn-sm btn-green" style="margin-top:0.75rem;width:100%" onclick="showToast('✅ Permintaan jual plastik dikirim!')">Jual Sekarang</button>
+      </div>
+    </div>
+
+    <!-- HOW TO SELL -->
+    <div style="margin-top:4rem;background:var(--sage-ultra);border-radius:var(--radius);padding:2.5rem">
+      <h3 style="font-family:'Poppins',sans-serif;font-weight:800;color:var(--sage-deeper);margin-bottom:2rem;font-size:1.3rem">Cara Jual Sampah di WasteWise</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">Pilih Jenis Sampah</div>
+          <div class="step-desc">Pilih kategori sampah yang ingin dijual dan masukkan estimasi berat/volume</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">Siapkan & Bersihkan</div>
+          <div class="step-desc">Ikuti panduan edukasi untuk membersihkan sampah agar harga optimal</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">Setor & Dapat Bayaran</div>
+          <div class="step-desc">Bawa ke drop point atau jadwalkan pickup. Pembayaran langsung ke rekening Anda</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: MARKETPLACE ===== -->
+<div class="page" id="page-marketplace">
+  <div class="section-hero">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">🛒</div>
+    <h1>Marketplace Hijau WasteWise</h1>
+    <p>Produk ramah lingkungan untuk operasional UMKM Anda sehari-hari</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Produk Pilihan</div>
+    <h2 class="section-title">Belanja Produk Eco-Friendly</h2>
+    <p class="section-desc">Semua produk di marketplace kami dipilih dengan standar ramah lingkungan. Bayar dengan poin atau tunai.</p>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter(this,'all-market')">Semua</button>
+      <button class="filter-btn" onclick="setFilter(this,'dapur')">Dapur</button>
+      <button class="filter-btn" onclick="setFilter(this,'kemasan')">Kemasan</button>
+      <button class="filter-btn" onclick="setFilter(this,'peralatan')">Peralatan</button>
+    </div>
+
+    <div class="marketplace-grid">
+      <div class="product-card">
+        <div class="product-img">🫒</div>
+        <div class="product-body">
+          <div class="product-name">Minyak Goreng Eceran</div>
+          <div class="product-desc">Minyak goreng hasil daur ulang berkualitas, aman dan bersih untuk kebutuhan masak harian UMKM kuliner.</div>
+          <div class="product-price">Rp 15.000–25.000</div>
+          <div class="product-unit">per liter</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Minyak Goreng Eceran')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🛍️</div>
+        <div class="product-body">
+          <div class="product-name">Kantong Kresek</div>
+          <div class="product-desc">Kantong plastik daur ulang untuk operasional usaha. Lebih tipis namun tetap kuat dan ramah lingkungan.</div>
+          <div class="product-price">Rp 18.000</div>
+          <div class="product-unit">per pack</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Kantong Kresek')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🌱</div>
+        <div class="product-body">
+          <div class="product-name">Pupuk Organik</div>
+          <div class="product-desc">Pupuk kompos organik berkualitas tinggi, hasil olahan limbah organik dari ribuan Wisers se-Indonesia.</div>
+          <div class="product-price">Rp 10.000</div>
+          <div class="product-unit">per kg</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Pupuk Organik')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🧻</div>
+        <div class="product-body">
+          <div class="product-name">Tissue Ramah Lingkungan</div>
+          <div class="product-desc">Tissue berbahan dasar bambu yang terurai alami, tanpa pemutih kimia berbahaya. Cocok untuk resto dan kafe.</div>
+          <div class="product-price">Rp 15.000</div>
+          <div class="product-unit">per pack besar</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Tissue Ramah Lingkungan')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">👜</div>
+        <div class="product-body">
+          <div class="product-name">Kantong Belanja Lipat</div>
+          <div class="product-desc">Tas belanja lipat praktis dari bahan daur ulang. Bisa dipakai ulang ratusan kali, hemat dan eco.</div>
+          <div class="product-price">Rp 10.000</div>
+          <div class="product-unit">per pcs</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Kantong Belanja Lipat')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🥄</div>
+        <div class="product-body">
+          <div class="product-name">Sendok Garpu Kayu Sekali Pakai</div>
+          <div class="product-desc">Alat makan berbahan kayu birch yang terurai alami. Alternatif plastik terbaik untuk usaha kuliner dan katering.</div>
+          <div class="product-price">Rp 35.000</div>
+          <div class="product-unit">per 100 pcs</div>
+          <div class="product-footer">
+            <button class="btn-sm btn-green" onclick="addToCart('Sendok Garpu Kayu')">+ Keranjang</button>
+            <button class="btn-sm btn-outline" onclick="showToast('💬 Chat penjual...')">Chat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: DROP POINT ===== -->
+<div class="page" id="page-droppoint">
+  <div class="section-hero">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">📍</div>
+    <h1>Temukan Drop Point Terdekat</h1>
+    <p>Setor sampah Anda di lebih dari 200 lokasi drop point di seluruh Indonesia</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Peta Lokasi</div>
+    <h2 class="section-title">Drop Point WasteWise</h2>
+    <input class="search-bar" style="margin-bottom:1rem" placeholder="🔍 Cari berdasarkan kota atau nama drop point...">
+    <div id="map"></div>
+
+    <div class="filter-bar" style="margin-top:1.5rem">
+      <button class="filter-btn active" onclick="setFilter(this,'dp-semua')">Semua Jenis</button>
+      <button class="filter-btn" onclick="setFilter(this,'dp-organik')">Organik</button>
+      <button class="filter-btn" onclick="setFilter(this,'dp-plastik')">Plastik</button>
+      <button class="filter-btn" onclick="setFilter(this,'dp-kertas')">Kertas</button>
+      <button class="filter-btn" onclick="setFilter(this,'dp-ewaste')">E-Waste</button>
+    </div>
+
+    <div class="dp-grid">
+      <div class="dp-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="dp-name">Bank Sampah Hijau Lestari</div>
+          <div style="color:var(--amber);font-size:0.82rem;font-weight:700">★ 4.9</div>
+        </div>
+        <div class="dp-info">📍 Jl. Gatot Subroto No. 45, Jakarta Selatan</div>
+        <div class="dp-info">📞 021-55512345</div>
+        <div class="dp-info">⏰ Senin–Sabtu 08.00–17.00</div>
+        <div class="dp-tags">
+          <span class="tag tag-green">Organik</span>
+          <span class="tag tag-amber">Kertas/Kardus</span>
+          <span class="tag" style="background:#f1f5f9;color:#475569;font-size:0.72rem;font-weight:600;padding:3px 10px;border-radius:100px">Plastik</span>
+        </div>
+        <div class="dp-footer">
+          <button class="btn-sm btn-green" onclick="showToast('🗺 Membuka navigasi...')">🧭 Petunjuk Arah</button>
+          <button class="btn-sm btn-outline" onclick="showToast('📞 Menghubungi...')">📞 Hubungi</button>
+        </div>
+      </div>
+      <div class="dp-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="dp-name">Pusat Daur Ulang Organik Bandung</div>
+          <div style="color:var(--amber);font-size:0.82rem;font-weight:700">★ 4.7</div>
+        </div>
+        <div class="dp-info">📍 Jl. Raya Dago No. 88, Bandung</div>
+        <div class="dp-info">📞 022-44556677</div>
+        <div class="dp-info">⏰ Senin–Jumat 07.00–16.00</div>
+        <div class="dp-tags">
+          <span class="tag tag-green">Organik</span>
+          <span class="tag tag-green">Minyak Jelantah</span>
+        </div>
+        <div class="dp-footer">
+          <button class="btn-sm btn-green" onclick="showToast('🗺 Membuka navigasi...')">🧭 Petunjuk Arah</button>
+          <button class="btn-sm btn-outline" onclick="showToast('📞 Menghubungi...')">📞 Hubungi</button>
+        </div>
+      </div>
+      <div class="dp-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="dp-name">Bank Sampah Digital Surabaya</div>
+          <div style="color:var(--amber);font-size:0.82rem;font-weight:700">★ 4.8</div>
+        </div>
+        <div class="dp-info">📍 Jl. Ahmad Yani No. 321, Surabaya</div>
+        <div class="dp-info">📞 031-99887766</div>
+        <div class="dp-info">⏰ Senin–Sabtu 08.00–17.00</div>
+        <div class="dp-tags">
+          <span class="tag tag-amber">Kertas/Kardus</span>
+          <span class="tag" style="background:#f1f5f9;color:#475569;font-size:0.72rem;font-weight:600;padding:3px 10px;border-radius:100px">Logam</span>
+          <span class="tag tag-blue">E-Waste</span>
+        </div>
+        <div class="dp-footer">
+          <button class="btn-sm btn-green" onclick="showToast('🗺 Membuka navigasi...')">🧭 Petunjuk Arah</button>
+          <button class="btn-sm btn-outline" onclick="showToast('📞 Menghubungi...')">📞 Hubungi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: LEADERBOARD ===== -->
+<div class="page" id="page-leaderboard">
+  <div class="section-hero">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">🏆</div>
+    <h1>Leaderboard Wisers</h1>
+    <p>Para Wisers terbaik yang paling aktif berkontribusi menjaga bumi</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Top Kontributor</div>
+    <h2 class="section-title">Ranking Wisers Bulan Ini</h2>
+
+    <div style="margin-top:1.5rem">
+      <div class="lb-row top1">
+        <div class="lb-rank">🥇</div>
+        <div>
+          <div class="lb-name">Warung Bu Sari — Bandung</div>
+          <div class="lb-city">UMKM Kuliner · 48 setoran bulan ini</div>
+        </div>
+        <div class="lb-pts">8.420 pts</div>
+        <div class="lb-badge"><span class="tag tag-amber">Wisers Elite</span></div>
+      </div>
+      <div class="lb-row top2">
+        <div class="lb-rank">🥈</div>
+        <div>
+          <div class="lb-name">Toko Bakery Pak Budi — Surabaya</div>
+          <div class="lb-city">UMKM Kuliner · 41 setoran bulan ini</div>
+        </div>
+        <div class="lb-pts">7.150 pts</div>
+        <div class="lb-badge"><span class="tag tag-green">Wisers Pro</span></div>
+      </div>
+      <div class="lb-row top3">
+        <div class="lb-rank">🥉</div>
+        <div>
+          <div class="lb-name">Batik Ratna — Solo</div>
+          <div class="lb-city">UMKM Kerajinan · 36 setoran bulan ini</div>
+        </div>
+        <div class="lb-pts">6.880 pts</div>
+        <div class="lb-badge"><span class="tag tag-green">Wisers Pro</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank" style="color:var(--text-light)">4</div>
+        <div>
+          <div class="lb-name">Laundry Kiloan Pak Joko — Yogyakarta</div>
+          <div class="lb-city">UMKM Jasa · 29 setoran bulan ini</div>
+        </div>
+        <div class="lb-pts">5.320 pts</div>
+        <div class="lb-badge"><span class="tag" style="background:var(--sage-pale);color:var(--sage-deeper);font-size:0.72rem;font-weight:600;padding:3px 10px;border-radius:100px">Wisers Aktif</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank" style="color:var(--text-light)">5</div>
+        <div>
+          <div class="lb-name">Kedai Kopi Nusantara — Medan</div>
+          <div class="lb-city">UMKM Kuliner · 25 setoran bulan ini</div>
+        </div>
+        <div class="lb-pts">4.900 pts</div>
+        <div class="lb-badge"><span class="tag" style="background:var(--sage-pale);color:var(--sage-deeper);font-size:0.72rem;font-weight:600;padding:3px 10px;border-radius:100px">Wisers Aktif</span></div>
+      </div>
+    </div>
+
+    <!-- REWARD INFO -->
+    <div style="margin-top:3.5rem;background:linear-gradient(135deg,var(--sage-pale),#e8f5e0);border-radius:var(--radius);padding:2rem;border:1px solid var(--sage-light)">
+      <h3 style="font-weight:800;color:var(--sage-deeper);margin-bottom:0.5rem;font-size:1.1rem">🎁 Program Wisers Monthly Surprise</h3>
+      <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:1.25rem;line-height:1.75">Setiap bulan, 5 Wisers dengan poin tertinggi mendapatkan apresiasi eksklusif dari WasteWise — mulai dari voucher, produk marketplace, hingga sertifikat penghargaan khusus.</p>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <div style="background:white;border-radius:var(--radius-sm);padding:1rem 1.5rem;flex:1;min-width:150px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:1.5rem">🎁</div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper);margin-top:0.4rem">Hadiah Eksklusif</div>
+          <div style="font-size:0.72rem;color:var(--text-light)">Produk & Voucher</div>
+        </div>
+        <div style="background:white;border-radius:var(--radius-sm);padding:1rem 1.5rem;flex:1;min-width:150px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:1.5rem">📜</div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper);margin-top:0.4rem">Sertifikat Hijau</div>
+          <div style="font-size:0.72rem;color:var(--text-light)">Untuk dipajang di usaha</div>
+        </div>
+        <div style="background:white;border-radius:var(--radius-sm);padding:1rem 1.5rem;flex:1;min-width:150px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:1.5rem">📣</div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--sage-deeper);margin-top:0.4rem">Sorotan Media</div>
+          <div style="font-size:0.72rem;color:var(--text-light)">Fitur di sosial media kami</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="logo footer-brand" onclick="showPage('beranda')" style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;cursor:pointer">
+        <div class="logo-icon">♻️</div>
+        <span style="font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:800;color:white">WasteWise</span>
+      </a>
+      <p class="footer-desc">Platform pengelolaan limbah UMKM #1 di Indonesia. Bersama ribuan Wisers, kami mengubah sampah menjadi nilai nyata untuk usaha dan lingkungan.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a onclick="showPage('beranda')">Beranda</a></li>
+        <li><a onclick="showPage('edukasi')">Edukasi</a></li>
+        <li><a onclick="showPage('jual')">Jual Sampah</a></li>
+        <li><a onclick="showPage('marketplace')">Marketplace</a></li>
+        <li><a onclick="showPage('droppoint')">Drop Point</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Program</h4>
+      <ul>
+        <li><a onclick="showToast('🌟 Monthly Surprise info...')">Monthly Surprise</a></li>
+        <li><a onclick="showToast('🏆 Grand Award info...')">Grand Award & Expo</a></li>
+        <li><a onclick="showPage('leaderboard')">Leaderboard Wisers</a></li>
+        <li><a onclick="showToast('📜 Info sertifikat...')">Sertifikat Hijau</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Kontak</h4>
+      <ul>
+        <li><a>📧 <span class="__cf_email__" data-cfemail="523a333e3d122533212637253b21377c3b36">[email&#160;protected]</span></a></li>
+        <li><a>📞 0800-1234-567 (gratis)</a></li>
+        <li><a>💬 Live Chat 24/7</a></li>
+        <li><a>📍 Jakarta, Indonesia</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 WasteWise · Mengelola Sampah, Membangun Masa Depan</span>
+    <span>Kebijakan Privasi · Syarat & Ketentuan</span>
+  </div>
+</footer>
+
+<!-- ===== HELPDESK ===== -->
+<div class="hd-wrap">
+  <div class="hd-chat" id="hd-chat">
+    <div class="hd-header">
+      <div class="hd-header-title">♻️ WasteWise Support</div>
+      <button class="hd-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="hd-messages" id="hd-messages">
+      <div class="hd-msg">
+        <div class="hd-avatar hd-avatar-bot">🌿</div>
+        <div class="hd-bubble">Halo Wisers! Ada yang bisa kami bantu hari ini? 😊</div>
+      </div>
+    </div>
+    <div class="hd-quick" id="hd-quick">
+      <div class="hd-q" onclick="sendQuick('Cara daftar jadi Wisers?')">Cara daftar</div>
+      <div class="hd-q" onclick="sendQuick('Harga kardus berapa?')">Harga sampah</div>
+      <div class="hd-q" onclick="sendQuick('Cari drop point terdekat')">Drop point</div>
+      <div class="hd-q" onclick="sendQuick('Cara tukar reward?')">Reward</div>
+    </div>
+    <div class="hd-input-area">
+      <input class="hd-input" id="hd-input" placeholder="Tulis pesan..." onkeypress="if(event.key==='Enter')sendMsg()">
+      <button class="hd-send" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+  <button class="hd-btn" onclick="toggleChat()">💬</button>
+</div>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <h3>🌿 Bergabung dengan WasteWise</h3>
+    <div id="modal-tabs" style="display:flex;gap:0;margin-bottom:1.5rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+      <button id="tab-masuk" onclick="switchTab('masuk')" style="flex:1;padding:0.6rem;border:none;background:var(--sage);color:white;font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;font-size:0.85rem">Masuk</button>
+      <button id="tab-daftar" onclick="switchTab('daftar')" style="flex:1;padding:0.6rem;border:none;background:white;color:var(--text-light);font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;font-size:0.85rem">Daftar Wisers</button>
+    </div>
+    <div id="form-masuk">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" placeholder="email@umkm.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="closeModal('loginModal');showToast('✅ Berhasil masuk! Selamat datang, Wisers!')">Masuk</button>
+      <p style="text-align:center;font-size:0.78rem;color:var(--text-light);margin-top:0.75rem">Lupa password? <a style="color:var(--sage-mid);cursor:pointer;font-weight:600">Reset di sini</a></p>
+    </div>
+    <div id="form-daftar" style="display:none">
+      <div class="input-group">
+        <label>Nama Usaha</label>
+        <input placeholder="Contoh: Warung Makan Bu Sari">
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" placeholder="email@umkm.com">
+      </div>
+      <div class="input-group">
+        <label>No. HP / WhatsApp</label>
+        <input placeholder="08xx-xxxx-xxxx">
+      </div>
+      <div class="input-group">
+        <label>Kota/Kabupaten</label>
+        <input placeholder="Bandung">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" placeholder="Min. 8 karakter">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="closeModal('loginModal');showToast('🎉 Selamat! Anda resmi jadi Wisers!')">Daftar Jadi Wisers</button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-light);margin-top:0.75rem">Dengan mendaftar, Anda menyetujui Syarat & Ketentuan WasteWise.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ===== PAGE NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === id);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 'droppoint') setTimeout(initMap, 200);
+}
+
+// ===== MAP =====
+let mapInit = false;
+function initMap() {
+  if (mapInit) return;
+  mapInit = true;
+  const map = L.map('map').setView([-6.2088, 106.8456], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+  const icon = L.divIcon({ className: '', html: '<div style="background:#9DC183;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:1rem;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25)">♻️</div>', iconSize: [32, 32], iconAnchor: [16, 16] });
+  const points = [
+    { lat: -6.2615, lng: 106.8106, name: 'Bank Sampah Hijau Lestari', desc: 'Plastik, Kardus, Organik' },
+    { lat: -6.1944, lng: 106.8229, name: 'Drop Point E-Waste Jakarta', desc: 'Elektronik & E-Waste' },
+    { lat: -7.0051, lng: 107.5744, name: 'Pusat Daur Ulang Organik Bandung', desc: 'Minyak Jelantah, Organik' },
+    { lat: -7.2459, lng: 112.7378, name: 'Bank Sampah Digital Surabaya', desc: 'Semua Jenis Limbah' },
+    { lat: -7.7956, lng: 110.3695, name: 'Drop Point Wisers Yogyakarta', desc: 'Plastik, Kertas, Logam' },
+  ];
+  points.forEach(p => {
+    L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(`<b style="font-family:Poppins,sans-serif">${p.name}</b><br><small>${p.desc}</small>`);
+  });
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== MODALS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+function switchTab(tab) {
+  document.getElementById('form-masuk').style.display = tab === 'masuk' ? 'block' : 'none';
+  document.getElementById('form-daftar').style.display = tab === 'daftar' ? 'block' : 'none';
+  document.getElementById('tab-masuk').style.background = tab === 'masuk' ? 'var(--sage)' : 'white';
+  document.getElementById('tab-masuk').style.color = tab === 'masuk' ? 'white' : 'var(--text-light)';
+  document.getElementById('tab-daftar').style.background = tab === 'daftar' ? 'var(--sage)' : 'white';
+  document.getElementById('tab-daftar').style.color = tab === 'daftar' ? 'white' : 'var(--text-light)';
+}
+
+// ===== ACCORDION =====
+function toggleAcc(el) {
+  const body = el.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.acc-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.acc-header span').forEach(s => s.textContent = '▼');
+  if (!isOpen) { body.classList.add('open'); el.querySelector('span').textContent = '▲'; }
+}
+
+// ===== TIPS =====
+function toggleTip(card, text) {
+  const detail = document.getElementById('tip-detail');
+  const tipText = document.getElementById('tip-text');
+  document.querySelectorAll('.tip-card').forEach(c => c.style.borderColor = '');
+  if (detail.style.display === 'block' && tipText.textContent === text) {
+    detail.style.display = 'none';
+  } else {
+    card.style.borderColor = 'var(--sage)';
+    tipText.textContent = text;
+    detail.style.display = 'block';
+  }
+}
+
+// ===== FILTERS =====
+function setFilter(btn, cat) {
+  btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== CART =====
+let cartCount = 0;
+function addToCart(name) {
+  cartCount++;
+  showToast(`🛒 ${name} ditambahkan ke keranjang (${cartCount} item)`);
+}
+
+// ===== HELPDESK =====
+function toggleChat() {
+  document.getElementById('hd-chat').classList.toggle('open');
+}
+
+const botResponses = {
+  'daftar': 'Untuk daftar jadi Wisers, klik tombol "Masuk / Daftar" di pojok kanan atas, lalu pilih "Daftar Wisers". Prosesnya hanya 2 menit! 😊',
+  'kardus': 'Harga kardus bersih saat ini Rp 2.000/kg. Pastikan kardus kering dan diratakan ya Wisers! 📦',
+  'minyak': 'Minyak jelantah bersih dihargai Rp 5.000/liter. Simpan dalam wadah tertutup ya! 🫙',
+  'drop point': 'Cek halaman Drop Point untuk menemukan lokasi setor sampah terdekat! 📍',
+  'reward': 'Setiap setoran sampah menghasilkan poin. Kumpulkan untuk hadiah Monthly Surprise atau Grand Award! 🏆',
+  'default': 'Terima kasih, Wisers! Tim kami akan segera merespons. Hubungi kami di halo@wastewise.id 📧'
+};
+
+function sendQuick(text) {
+  document.getElementById('hd-input').value = text;
+  sendMsg();
+}
+
+function sendMsg() {
+  const input = document.getElementById('hd-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const msgs = document.getElementById('hd-messages');
+  msgs.innerHTML += `<div class="hd-msg user"><div class="hd-avatar hd-avatar-user">👤</div><div class="hd-bubble">${msg}</div></div>`;
+  input.value = '';
+  document.getElementById('hd-quick').style.display = 'none';
+  setTimeout(() => {
+    const lower = msg.toLowerCase();
+    let reply = botResponses.default;
+    for (const [key, val] of Object.entries(botResponses)) {
+      if (lower.includes(key)) { reply = val; break; }
+    }
+    msgs.innerHTML += `<div class="hd-msg"><div class=
